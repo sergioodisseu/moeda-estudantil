@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------- Credencial
+// Login e senha compartilhados por composição entre os três perfis.
+model Credencial {
+  id        Int    @id @default(autoincrement())
+  login     String @unique @db.VarChar(50)
+  senhaHash String @map("senha_hash") @db.VarChar(255)
+
+  aluno           Aluno?
+  professor       Professor?
+  empresaParceira EmpresaParceira?
+
+  @@map("credencial")
+}
+
+// ----------------------------------------------------------- InstituicaoEnsino
+model InstituicaoEnsino {
+  id   Int    @id @default(autoincrement())
+  nome String @db.VarChar(120)
+
+  alunos      Aluno[]
+  professores Professor[]
+
+  @@map("instituicao_ensino")
+}
+
+// --------------------------------------------------------------------- Aluno
+model Aluno {
+  id            Int    @id @default(autoincrement())
+  credencialId  Int    @unique @map("credencial_id")
+  instituicaoId Int    @map("instituicao_id")
+  nome          String @db.VarChar(120)
+  email         String @db.VarChar(120)
+  cpf           String @unique @db.Char(11)
+  rg            String @db.VarChar(20)
+  endereco      String @db.VarChar(255)
+  curso         String @db.VarChar(100)
+  saldo         Int    @default(0)
+
+  credencial  Credencial        @relation(fields: [credencialId], references: [id])
+  instituicao InstituicaoEnsino @relation(fields: [instituicaoId], references: [id])
+
+  enviosRecebidos EnvioMoedas[]
+  resgates        Resgate[]
+
+  @@map("aluno")
+}
+
+// ----------------------------------------------------------------- Professor
+model Professor {
+  id            Int    @id @default(autoincrement())
+  credencialId  Int    @unique @map("credencial_id")
+  instituicaoId Int    @map("instituicao_id")
+  nome          String @db.VarChar(120)
+  cpf           String @unique @db.Char(11)
+  departamento  String @db.VarChar(100)
+  saldo         Int    @default(0)
+
+  credencial  Credencial        @relation(fields: [credencialId], references: [id])
+  instituicao InstituicaoEnsino @relation(fields: [instituicaoId], references: [id])
+
+  enviosRealizados EnvioMoedas[]
+
+  @@map("professor")
+}
+
+// ------------------------------------------------------------ EmpresaParceira
+model EmpresaParceira {
+  id           Int    @id @default(autoincrement())
+  credencialId Int    @unique @map("credencial_id")
+  nome         String @db.VarChar(120)
+  email        String @db.VarChar(120)
+
+  credencial Credencial @relation(fields: [credencialId], references: [id])
+
+  vantagens Vantagem[]
+
+  @@map("empresa_parceira")
+}
+
+// ------------------------------------------------------------------ Vantagem
+model Vantagem {
+  id             Int    @id @default(autoincrement())
+  empresaId      Int    @map("empresa_id")
+  descricao      String @db.VarChar(255)
+  foto           String @db.VarChar(500) // caminho/URL da imagem
+  custoEmMoedas  Int    @map("custo_em_moedas")
+
+  empresa EmpresaParceira @relation(fields: [empresaId], references: [id])
+
+  resgates Resgate[]
+
+  @@map("vantagem")
+}
+
+// ----------------------------------------------------------------- Transacao
+// Supertipo. EnvioMoedas e Resgate reaproveitam a PK (relacionamento identificador).
+model Transacao {
+  id       Int      @id @default(autoincrement())
+  dataHora DateTime @default(now()) @map("data_hora")
+  valor    Int
+
+  envio   EnvioMoedas?
+  resgate Resgate?
+
+  @@map("transacao")
+}
+
+model EnvioMoedas {
+  transacaoId Int    @id @map("transacao_id")
+  professorId Int    @map("professor_id")
+  alunoId     Int    @map("aluno_id")
+  motivo      String @db.VarChar(255)
+
+  transacao Transacao @relation(fields: [transacaoId], references: [id])
+  professor Professor @relation(fields: [professorId], references: [id])
+  aluno     Aluno     @relation(fields: [alunoId], references: [id])
+
+  @@map("envio_moedas")
+}
+
+model Resgate {
+  transacaoId Int    @id @map("transacao_id")
+  alunoId     Int    @map("aluno_id")
+  vantagemId  Int    @map("vantagem_id")
+  codigo      String @unique @db.VarChar(20)
+
+  transacao Transacao @relation(fields: [transacaoId], references: [id])
+  aluno     Aluno     @relation(fields: [alunoId], references: [id])
+  vantagem  Vantagem  @relation(fields: [vantagemId], references: [id])
+
+  @@map("resgate")
+}
