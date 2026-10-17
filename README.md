@@ -2,7 +2,7 @@
 
 # Sistema de Moeda Estudantil
 
-<img src="docs/img/coin.gif" alt="Moeda Estudantil" width="500" height="500" />
+<img src="docs/img/coin.gif" alt="Moeda Estudantil" width="350" height="350" />
 
 ![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=nodedotjs&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
