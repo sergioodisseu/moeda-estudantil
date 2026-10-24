@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  database:
+    image: postgres:15-alpine
+    container_name: moeda_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: moeda_estudantil
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: moeda_backend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@database:5432/moeda_estudantil?schema=public
+    depends_on:
+      - database
+    networks:
+      - app-network
+    # Comando opcional para rodar as migrações do Prisma automaticamente ao subir
+    command: >
+      sh -c "bunx prisma migrate deploy && bun run src/index.ts"
+
+  frontend:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    container_name: moeda_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+volumes:
+  pgdata:
+
+networks:
+  app-network:
+    driver: bridge

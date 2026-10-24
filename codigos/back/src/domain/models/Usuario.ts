@@ -1,28 +1,24 @@
-export abstract class Usuario{
-    private id: number;
-    private login: string;
-    private senha: string;
+import { verificarSenhaHash } from "../shared/SenhaHasher";
 
-    constructor(id: number, login: string, senha: string){
+export abstract class Usuario {
+  private readonly id: number;
+  private readonly login: string;
+  private readonly senhaHash: string;
 
-        if(id <= 0) 
-            throw new Error("Usuário: ID deve ser maior que zero.");
-        
-        if(!login || login.trim().length == 0)
-            throw Error("Usuário: Login é obrigatório");
+  constructor(id: number, login: string, senhaHash: string) {
+    if (!login || login.trim() === "") throw new Error("O login é obrigatório.");
+    if (!senhaHash || !senhaHash.includes(":")) throw new Error("O hash da senha é inválido.");
+    this.id = id;
+    this.login = login.trim();
+    this.senhaHash = senhaHash;
+  }
 
-        if(!senha || senha.trim().length == 0)
-            throw Error("Usuário: Senha não pode ser vazia ou menor que 6 caracteres.");
+  public autenticar(login: string, senha: string): boolean {
+    if (this.login !== login) return false;
+    return verificarSenhaHash(senha, this.senhaHash);
+  }
 
-        this.id = id;
-        this.login = login;
-        this.senha = senha;
-    }
-    public autenticar(loginDigital: string, senhaDigitada: string): boolean{
-        if(!loginDigital || !senhaDigitada) return false;
-        return this.login === loginDigital && this.senha === senhaDigitada;
-    }
-
-    public getId(): number { return this.id; } 
-
+  protected exportarCredencial() {
+    return { id: this.id, login: this.login, senhaHash: this.senhaHash };
+  }
 }
