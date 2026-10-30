@@ -1,0 +1,35 @@
+{
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.10.1",
+    "@prisma/client": "7",
+    "hono": "^4.13.13",
+    "nodemailer": "^10.2.1",
+    "pg": "^8.23.1",
+    "zod": "^4.6.7",
+    "prisma": "7"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.4",
+    "@types/nodemailer": "^8.0.2",
+    "@types/pg": "^8.23.1",
+    "typescript": "^7.0.2"
+  },
+  "name": "moeda-estudantil-backend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/main.ts",
+    "start": "bun src/main.ts",
+    "seed": "bun src/scripts/seed.ts",
+    "creditar-semestre": "bun src/scripts/creditar-semestre.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit -p .",
+    "prisma:generate": "prisma generate",
+    "db:push": "prisma db push"
+  },
+  "trustedDependencies": [
+    "prisma",
+    "@prisma/engines",
+    "@prisma/client"
+  ]
+}

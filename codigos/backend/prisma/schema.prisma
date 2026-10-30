@@ -1,0 +1,124 @@
+// Modelo ER fornecido pelo grupo (diagrama ER), implementado à risca.
+// Usuario (Diagrama de Classes) é persistido como composição: tabela `credencial`
+// referenciada por professor, aluno e empresa_parceira via credencial_id (único).
+// Transacao é especializada por envio_moedas e resgate (PK = FK transacao_id).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/infrastructure/persistence/prisma/gerado"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Credencial {
+  id        Int              @id @default(autoincrement())
+  login     String           @unique @db.VarChar(50)
+  senhaHash String           @map("senha_hash") @db.VarChar(255)
+  professor Professor?
+  aluno     Aluno?
+  empresa   EmpresaParceira?
+
+  @@map("credencial")
+}
+
+model InstituicaoEnsino {
+  id          Int         @id @default(autoincrement())
+  nome        String      @db.VarChar(120)
+  alunos      Aluno[]
+  professores Professor[]
+
+  @@map("instituicao_ensino")
+}
+
+model Professor {
+  id            Int               @id @default(autoincrement())
+  credencialId  Int               @unique @map("credencial_id")
+  credencial    Credencial        @relation(fields: [credencialId], references: [id], onDelete: Cascade)
+  instituicaoId Int               @map("instituicao_id")
+  instituicao   InstituicaoEnsino @relation(fields: [instituicaoId], references: [id])
+  nome          String            @db.VarChar(120)
+  cpf           String            @unique @db.Char(11)
+  departamento  String            @db.VarChar(100)
+  saldo         Int               @default(0)
+  envios        EnvioMoedas[]
+
+  @@map("professor")
+}
+
+model Aluno {
+  id            Int               @id @default(autoincrement())
+  credencialId  Int               @unique @map("credencial_id")
+  credencial    Credencial        @relation(fields: [credencialId], references: [id], onDelete: Cascade)
+  instituicaoId Int               @map("instituicao_id")
+  instituicao   InstituicaoEnsino @relation(fields: [instituicaoId], references: [id])
+  nome          String            @db.VarChar(120)
+  email         String            @db.VarChar(120)
+  cpf           String            @unique @db.Char(11)
+  rg            String            @db.VarChar(20)
+  endereco      String            @db.VarChar(255)
+  curso         String            @db.VarChar(100)
+  saldo         Int               @default(0)
+  envios        EnvioMoedas[]
+  resgates      Resgate[]
+
+  @@map("aluno")
+}
+
+model EmpresaParceira {
+  id           Int        @id @default(autoincrement())
+  credencialId Int        @unique @map("credencial_id")
+  credencial   Credencial @relation(fields: [credencialId], references: [id], onDelete: Cascade)
+  nome         String     @db.VarChar(120)
+  email        String     @db.VarChar(120)
+  vantagens    Vantagem[]
+
+  @@map("empresa_parceira")
+}
+
+model Vantagem {
+  id            Int             @id @default(autoincrement())
+  empresaId     Int             @map("empresa_id")
+  empresa       EmpresaParceira @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  descricao     String          @db.VarChar(255)
+  foto          String          @db.VarChar(500)
+  custoEmMoedas Int             @map("custo_em_moedas")
+  resgates      Resgate[]
+
+  @@map("vantagem")
+}
+
+model Transacao {
+  id       Int          @id @default(autoincrement())
+  dataHora DateTime     @default(now()) @map("data_hora")
+  valor    Int
+  envio    EnvioMoedas?
+  resgate  Resgate?
+
+  @@map("transacao")
+}
+
+model EnvioMoedas {
+  transacaoId Int       @id @map("transacao_id")
+  transacao   Transacao @relation(fields: [transacaoId], references: [id], onDelete: Cascade)
+  professorId Int       @map("professor_id")
+  professor   Professor @relation(fields: [professorId], references: [id])
+  alunoId     Int       @map("aluno_id")
+  aluno       Aluno     @relation(fields: [alunoId], references: [id])
+  motivo      String    @db.VarChar(255)
+
+  @@map("envio_moedas")
+}
+
+model Resgate {
+  transacaoId Int       @id @map("transacao_id")
+  transacao   Transacao @relation(fields: [transacaoId], references: [id], onDelete: Cascade)
+  alunoId     Int       @map("aluno_id")
+  aluno       Aluno     @relation(fields: [alunoId], references: [id])
+  vantagemId  Int       @map("vantagem_id")
+  vantagem    Vantagem  @relation(fields: [vantagemId], references: [id])
+  codigo      String    @unique @db.VarChar(20)
+
+  @@map("resgate")
+}
