@@ -183,3 +183,10 @@ yarn-error.log*
 # Arquivos de Sistema Operacional
 .DS_Store
 Thumbs.db
+
+
+node_modules
+dist
+preview
+.env
+backend/src/infrastructure/persistence/prisma/gerado
