@@ -110,26 +110,155 @@ O sistema foi desenhado seguindo o padrão **MVC**, com o *Model* organizado em 
 O projeto separa as responsabilidades seguindo o isolamento de domínio:
 
 ```text
-MOEDA-ESTUDANTIL/
-├── docs/                    # Diagramas e documentações das sprints
-├── frontend/                # Telas em React (autenticação, aluno, professor, empresa)
-└── backend/
-    ├── prisma/
-    │   └── schema.prisma    # Definição das tabelas do banco de dados (ORM)
-    ├── src/
-    │   ├── domain/          # Núcleo duro: regras de negócio puras (sem banco ou web)
-    │   │   ├── models/      # Aluno, Professor, EmpresaParceira, InstituicaoEnsino,
-    │   │   │                # Vantagem, Credencial e Transacao (EnvioMoedas, Resgate)
-    │   │   └── interfaces/  # Contratos exigidos pelo domínio (Repositories.ts, IServicoEmail)
-    │   ├── application/     # Casos de Uso: EnviarMoedas, ResgatarVantagem, ConsultarExtrato...
-    │   ├── infrastructure/  # A borda do sistema, onde ficam as implementações de I/O
-    │   │   ├── database/    # Repositórios com Prisma (incluindo o método atômico $transaction)
-    │   │   ├── external/    # ServicoEmailAdapter (provedor de e-mail)
-    │   │   └── http/        # Controllers e rotas do Express (MVC tradicional)
-    │   └── main.ts          # Ponto de entrada (injeção de dependências e inicialização)
-    ├── .env                 # Credenciais do banco (nunca commitar)
-    ├── docker-compose.yml   # Orquestração do banco, backend e frontend
-    ├── Dockerfile           # Build da imagem do backend usando Bun
-    ├── package.json         # Scripts e dependências
-    └── tsconfig.json        # Configurações do compilador TypeScript
+moeda-estudantil
+    ├── codigos
+    │   ├── backend
+    │   │   ├── prisma
+    │   │   │   └── schema.prisma
+    │   │   ├── src
+    │   │   │   ├── config
+    │   │   │   │   ├── composicao.ts
+    │   │   │   │   └── config.ts
+    │   │   │   ├── controllers
+    │   │   │   │   ├── http
+    │   │   │   │   │   ├── apresentacao.ts
+    │   │   │   │   │   ├── http.ts
+    │   │   │   │   │   └── sessao-jwt.ts
+    │   │   │   │   ├── aluno-controller.ts
+    │   │   │   │   ├── autenticacao-controller.ts
+    │   │   │   │   ├── empresa-parceira-controller.ts
+    │   │   │   │   └── professor-controller.ts
+    │   │   │   ├── infrastructure
+    │   │   │   │   ├── email
+    │   │   │   │   │   └── adaptador-email.ts
+    │   │   │   │   ├── persistence
+    │   │   │   │   │   └── prisma
+    │   │   │   │   │       ├── gerado
+    │   │   │   │   │       │   ├── internal
+    │   │   │   │   │       │   │   ├── class.ts
+    │   │   │   │   │       │   │   ├── prismaNamespace.ts
+    │   │   │   │   │       │   │   └── prismaNamespaceBrowser.ts
+    │   │   │   │   │       │   ├── models
+    │   │   │   │   │       │   │   ├── Aluno.ts
+    │   │   │   │   │       │   │   ├── Credencial.ts
+    │   │   │   │   │       │   │   ├── EmpresaParceira.ts
+    │   │   │   │   │       │   │   ├── EnvioMoedas.ts
+    │   │   │   │   │       │   │   ├── InstituicaoEnsino.ts
+    │   │   │   │   │       │   │   ├── Professor.ts
+    │   │   │   │   │       │   │   ├── Resgate.ts
+    │   │   │   │   │       │   │   ├── Transacao.ts
+    │   │   │   │   │       │   │   └── Vantagem.ts
+    │   │   │   │   │       │   ├── browser.ts
+    │   │   │   │   │       │   ├── client.ts
+    │   │   │   │   │       │   ├── commonInputTypes.ts
+    │   │   │   │   │       │   ├── enums.ts
+    │   │   │   │   │       │   └── models.ts
+    │   │   │   │   │       ├── cliente-prisma.ts
+    │   │   │   │   │       ├── mapeadores.ts
+    │   │   │   │   │       ├── repositorios-prisma.ts
+    │   │   │   │   │       └── unidade-de-trabalho-prisma.ts
+    │   │   │   │   └── security
+    │   │   │   │       └── senha-e-codigo.ts
+    │   │   │   ├── models
+    │   │   │   │   ├── entities
+    │   │   │   │   │   ├── aluno.ts
+    │   │   │   │   │   ├── empresa-parceira.ts
+    │   │   │   │   │   ├── instituicao-ensino.ts
+    │   │   │   │   │   ├── professor.ts
+    │   │   │   │   │   ├── transacao.ts
+    │   │   │   │   │   ├── usuario.ts
+    │   │   │   │   │   └── vantagem.ts
+    │   │   │   │   ├── gateways
+    │   │   │   │   │   └── servico-email.ts
+    │   │   │   │   ├── repositories
+    │   │   │   │   │   └── repositorios.ts
+    │   │   │   │   ├── services
+    │   │   │   │   │   ├── apoio.ts
+    │   │   │   │   │   ├── servico-aluno.ts
+    │   │   │   │   │   ├── servico-autenticacao.ts
+    │   │   │   │   │   ├── servico-credito-semestral.ts
+    │   │   │   │   │   ├── servico-empresa-parceira.ts
+    │   │   │   │   │   ├── servico-envio-moedas.ts
+    │   │   │   │   │   ├── servico-extrato.ts
+    │   │   │   │   │   ├── servico-resgate.ts
+    │   │   │   │   │   └── servico-vantagem.ts
+    │   │   │   │   └── shared
+    │   │   │   │       ├── resultado.ts
+    │   │   │   │       └── validacao.ts
+    │   │   │   ├── scripts
+    │   │   │   │   ├── creditar-semestre.ts
+    │   │   │   │   └── seed.ts
+    │   │   │   └── main.ts
+    │   │   ├── tests
+    │   │   │   ├── models
+    │   │   │   │   ├── dominio.test.ts
+    │   │   │   │   └── servicos.test.ts
+    │   │   │   └── support
+    │   │   │       ├── cenario.ts
+    │   │   │       └── repositorios-em-memoria.ts
+    │   │   ├── .dockerignore
+    │   │   ├── .gitignore
+    │   │   ├── bun.lock
+    │   │   ├── Dockerfile
+    │   │   ├── package.json
+    │   │   ├── prisma.config.ts
+    │   │   └── tsconfig.json
+    │   ├── frontend
+    │   │   ├── src
+    │   │   │   ├── api
+    │   │   │   │   ├── cliente-api.ts
+    │   │   │   │   ├── cliente-demonstracao.ts
+    │   │   │   │   ├── cliente-http.ts
+    │   │   │   │   └── index.ts
+    │   │   │   ├── componentes
+    │   │   │   │   ├── AvisoGlobal.tsx
+    │   │   │   │   ├── botoes.tsx
+    │   │   │   │   ├── Cabecalho.tsx
+    │   │   │   │   ├── campos.tsx
+    │   │   │   │   └── cartoes.tsx
+    │   │   │   ├── dominio
+    │   │   │   │   └── tipos.ts
+    │   │   │   ├── paginas
+    │   │   │   │   ├── CadastroPage.tsx
+    │   │   │   │   ├── LoginPage.tsx
+    │   │   │   │   ├── PainelAlunoPage.tsx
+    │   │   │   │   ├── PainelEmpresaPage.tsx
+    │   │   │   │   └── PainelProfessorPage.tsx
+    │   │   │   ├── sessao
+    │   │   │   │   ├── contextos.tsx
+    │   │   │   │   └── useRecurso.ts
+    │   │   │   ├── util
+    │   │   │   │   └── formatacao.ts
+    │   │   │   ├── App.tsx
+    │   │   │   ├── index.css
+    │   │   │   └── main.tsx
+    │   │   ├── .dockerignore
+    │   │   ├── .gitignore
+    │   │   ├── bun.lock
+    │   │   ├── Dockerfile
+    │   │   ├── index.html
+    │   │   ├── nginx.conf
+    │   │   ├── package.json
+    │   │   ├── tsconfig.json
+    │   │   ├── vite.config.ts
+    │   │   └── vite.preview.config.ts
+    │   └── docker-compose.yml
+    ├── docs
+    │   ├── diagramas
+    │   │   ├── sprint1-caso-de-uso.png
+    │   │   ├── sprint1-diagrama-de-classes.png
+    │   │   ├── sprint1-diagrama-de-componentes.png
+    │   │   └── sprint2-modelo-er.png
+    │   ├── img
+    │   │   ├── coin.gif
+    │   │   ├── mailPitRequest.png
+    │   │   ├── telaEstudante.png
+    │   │   ├── telaEstudanteExtratos.png
+    │   │   └── telaProfessor.png
+    │   ├── LABORATORIO_3_LAB_DESENVOLVIMENTO_DE_SOFTWARE (1).pdf
+    │   └── README.md
+    ├── .gitignore
+    ├── LICENSE
+    └── README.md
+
 ```
