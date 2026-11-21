@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import { criarAlunoController } from "@/controllers/aluno-controller.ts";
 import { criarAutenticacaoController } from "@/controllers/autenticacao-controller.ts";
 import { criarSessaoJwt } from "@/controllers/http/sessao-jwt.ts";
@@ -48,6 +49,7 @@ export type Servicos = ReturnType<typeof criarServicos>;
 export function criarApp(servicos: Servicos, segredoJwt: string) {
   const sessao = criarSessaoJwt(segredoJwt);
   return new Hono()
+    .use("*", cors())
     .route("/", criarAutenticacaoController(servicos.autenticacao, sessao))
     .route("/", criarAlunoController(servicos, sessao))
     .route("/", criarProfessorController(servicos, sessao))
