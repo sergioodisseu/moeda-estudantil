@@ -6,7 +6,9 @@ const esquema = z.object({
   PORT: z.coerce.number().int().default(3000),
   SMTP_HOST: z.string().default("localhost"),
   SMTP_PORT: z.coerce.number().int().default(1025),
-  EMAIL_REMETENTE: z.string().default("moeda-estudantil@localhost"),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  EMAIL_REMETENTE: z.string().default("noreply@moeda.com"),
 });
 
 export type Configuracao = z.infer<typeof esquema>;

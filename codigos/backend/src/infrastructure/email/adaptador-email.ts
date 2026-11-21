@@ -2,11 +2,24 @@ import { createTransport } from "nodemailer";
 import type { EnvioMoedas, Resgate } from "@/models/entities/transacao.ts";
 import type { ServicoEmail } from "@/models/gateways/servico-email.ts";
 
-export type ConfiguracaoSmtp = Readonly<{ host: string; porta: number; remetente: string }>;
+export type ConfiguracaoSmtp = Readonly<{
+  host: string;
+  porta: number;
+  remetente: string;
+  usuario?: string;
+  senha?: string;
+}>;
 
 /** Adaptador de Email: implementa ServicoEmail usando o Provedor de Email (SMTP). */
 export function criarAdaptadorEmail(configuracao: ConfiguracaoSmtp): ServicoEmail {
-  const transporte = createTransport({ host: configuracao.host, port: configuracao.porta, secure: false });
+  const transporte = createTransport({
+    host: configuracao.host,
+    port: configuracao.porta,
+    secure: false,
+    ...(configuracao.usuario && configuracao.senha
+      ? { auth: { user: configuracao.usuario, pass: configuracao.senha } }
+      : {}),
+  });
   const enviar = (para: string, assunto: string, texto: string) =>
     transporte.sendMail({ from: configuracao.remetente, to: para, subject: assunto, text: texto }).then(() => undefined);
 

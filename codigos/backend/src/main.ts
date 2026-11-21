@@ -9,7 +9,13 @@ const config = carregarConfiguracao();
 
 const servicos = criarServicos({
   persistencia: criarUnidadeDeTrabalhoPrisma(criarClientePrisma(config.DATABASE_URL)),
-  email: criarAdaptadorEmail({ host: config.SMTP_HOST, porta: config.SMTP_PORT, remetente: config.EMAIL_REMETENTE }),
+  email: criarAdaptadorEmail({
+    host: config.SMTP_HOST,
+    porta: config.SMTP_PORT,
+    remetente: config.EMAIL_REMETENTE,
+    usuario: config.SMTP_USER,
+    senha: config.SMTP_PASS,
+  }),
   registro: { erro: (mensagem, causa) => console.error(mensagem, causa instanceof Error ? causa.message : causa) },
   segredoJwt: config.JWT_SECRET,
   verificarSenha,
