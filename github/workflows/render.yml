@@ -1,0 +1,65 @@
+name: CI/CD — Moeda Estudantil
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  # Se no seu GitHub as pastas estiverem dentro de "codigos/", troque para codigos/backend e codigos/frontend
+  BACKEND_DIR: backend
+  FRONTEND_DIR: frontend
+
+jobs:
+  verificar:
+    name: Testes e Build (Back + Front)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Instalar Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      # --- BACKEND ---
+      - name: Instalar dependências do backend
+        working-directory: ${{ env.BACKEND_DIR }}
+        run: bun install --frozen-lockfile
+
+      - name: Gerar Prisma Client
+        working-directory: ${{ env.BACKEND_DIR }}
+        run: bun run prisma:generate
+
+      - name: Typecheck do backend
+        working-directory: ${{ env.BACKEND_DIR }}
+        run: bun run typecheck
+
+      - name: Rodar testes do backend (dominio + servicos)
+        working-directory: ${{ env.BACKEND_DIR }}
+        run: bun test
+
+      # --- FRONTEND ---
+      - name: Instalar dependências do frontend
+        working-directory: ${{ env.FRONTEND_DIR }}
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck e Build do frontend
+        working-directory: ${{ env.FRONTEND_DIR }}
+        run: bun run build
+
+  deploy-render:
+    name: Deploy no Render
+    needs: verificar
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Disparar deploy do Backend no Render
+        run: curl -fsS -X POST "${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}"
+
+      - name: Disparar deploy do Frontend no Render
+        run: curl -fsS -X POST "${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK }}"
